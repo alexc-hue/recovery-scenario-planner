@@ -1,0 +1,22 @@
+snapshot_date,risk_id,description,category,probability,impact,status,mitigation_due_date
+2026-03-01,R01,Compressor rotor vendor capacity constraint,Procurement,3,4,Open,2026-04-15
+2026-04-01,R01,Compressor rotor vendor capacity constraint,Procurement,4,5,Mitigating,2026-04-15
+2026-05-01,R01,Compressor rotor vendor capacity constraint,Procurement,4,5,Mitigating,2026-04-15
+2026-05-01,R02,Expedited freight customs delay risk,Logistics,3,3,Open,2026-06-01
+2026-06-01,R02,Expedited freight customs delay risk,Logistics,2,2,Mitigating,2026-06-01
+2026-07-01,R02,Expedited freight customs delay risk,Logistics,1,2,Mitigating,2026-06-01
+2026-08-01,R02,Expedited freight customs delay risk,Logistics,1,2,Mitigating,2026-06-01
+2026-06-01,R03,Commissioning schedule compression risk,Commissioning,2,3,Open,2026-08-15
+2026-07-01,R03,Commissioning schedule compression risk,Commissioning,3,4,Open,2026-08-15
+2026-08-01,R03,Commissioning schedule compression risk,Commissioning,3,4,Mitigating,2026-08-15
+2026-07-01,R04,Client acceptance test readiness risk,Commissioning,2,4,Open,2026-08-20
+2026-08-01,R04,Client acceptance test readiness risk,Commissioning,2,4,Open,2026-08-20
+2026-03-01,R05,Cost overrun on expedited logistics,Commercial,2,3,Open,2026-07-01
+2026-04-01,R05,Cost overrun on expedited logistics,Commercial,3,3,Open,2026-07-01
+2026-05-01,R05,Cost overrun on expedited logistics,Commercial,3,3,Mitigating,2026-07-01
+2026-06-01,R05,Cost overrun on expedited logistics,Commercial,3,3,Mitigating,2026-07-01
+2026-07-01,R05,Cost overrun on expedited logistics,Commercial,3,3,Mitigating,2026-07-01
+2026-08-01,R05,Cost overrun on expedited logistics,Commercial,2,3,Mitigating,2026-07-01
+2026-06-01,R06,Site HSE risk during compressed installation window,HSE,2,5,Open,
+2026-07-01,R06,Site HSE risk during compressed installation window,HSE,2,5,Open,
+2026-08-01,R06,Site HSE risk during compressed installation window,HSE,2,5,Open,

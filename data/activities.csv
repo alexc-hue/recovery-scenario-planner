@@ -1,0 +1,13 @@
+activity_id,activity_name,phase,predecessors,baseline_duration_days,current_duration_days,status,percent_complete
+E1,Process and Mechanical Design,Engineering,,25,25,Complete,100
+E2,Detailed Engineering,Engineering,E1,30,30,Complete,100
+P1,Compressor Rotor Procurement,Procurement,E2,70,100,Complete,100
+P2,Auxiliary Equipment Procurement,Procurement,E2,40,40,Complete,100
+C1,Site Preparation,Civil,E1,20,20,Complete,100
+C2,Foundation Works,Civil,C1,30,30,Complete,100
+M1,Compressor Skid Installation,Mechanical,C2;P1,25,25,Complete,100
+M2,Piping and Auxiliary Installation,Mechanical,C2;P2,20,20,Complete,100
+E3,Electrical and Instrumentation Installation,Electrical,M1,20,20,Complete,100
+CM1,Pre-commissioning Checks,Commissioning,M2;E3,15,15,In Progress,50
+CM2,Functional Testing,Commissioning,CM1,15,15,Not Started,0
+CM3,Performance Testing and Handover,Commissioning,CM2,10,10,Not Started,0
