@@ -41,6 +41,28 @@ BAC = 2_400_000
 PROJECT_START = "2026-01-05"
 STATUS_DATE = "2026-08-01"
 
+# Standardized chart color system (chart chrome, categorical series)
+CHART_BG = "#fcfcfb"
+INK = "#10182b"
+GRID = "#e1e0d9"
+
+
+def _apply_chrome(fig, axes) -> None:
+    """Apply the standardized chart chrome (background, ink, gridlines) to a figure."""
+    fig.patch.set_facecolor(CHART_BG)
+    if hasattr(axes, "flatten"):
+        axes = axes.flatten().tolist()
+    elif not isinstance(axes, (list, tuple)):
+        axes = [axes]
+    for ax in axes:
+        ax.set_facecolor(CHART_BG)
+        ax.title.set_color(INK)
+        ax.xaxis.label.set_color(INK)
+        ax.yaxis.label.set_color(INK)
+        ax.tick_params(colors=INK)
+        for spine in ax.spines.values():
+            spine.set_color(INK)
+
 
 def money(x: float) -> str:
     return f"${x:,.0f}"
@@ -107,25 +129,27 @@ def chart_comparison(scenarios, summary) -> str | None:
         labels = [s.label for s in scenarios]
         slips = [s.slip_days for s in scenarios]
         costs = [s.cost_impact for s in scenarios]
-        colors = ["#C44E52", "#DD8452", "#55A868"]
+        colors = ["#2a78d6", "#eb6834", "#1baf7a"]
 
         fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
 
         ax = axes[0]
         ax.barh(labels, slips, color=colors)
         ax.set_title("Forecast finish slip vs. baseline (days)")
-        ax.axvline(0, color="gray", linewidth=0.8)
-        ax.grid(alpha=0.3, axis="x")
+        ax.axvline(0, color=INK, linewidth=0.8, alpha=0.6)
+        ax.grid(color=GRID, linewidth=0.6, axis="x")
 
         ax = axes[1]
         ax.barh(labels, costs, color=colors)
         ax.set_title("Incremental cost of the intervention ($)")
-        ax.grid(alpha=0.3, axis="x")
+        ax.grid(color=GRID, linewidth=0.6, axis="x")
 
-        fig.suptitle("Recovery Scenario Comparison: Ridgeline LNG Compressor Station Retrofit", fontsize=12)
+        _apply_chrome(fig, axes)
+        fig.suptitle("Recovery Scenario Comparison: Ridgeline LNG Compressor Station Retrofit",
+                     fontsize=12, color=INK)
         fig.tight_layout()
         out_path = os.path.join(ASSETS_DIR, "before_after_comparison.png")
-        fig.savefig(out_path, dpi=140)
+        fig.savefig(out_path, dpi=140, facecolor=CHART_BG)
         plt.close(fig)
         return out_path
     except Exception as exc:  # pragma: no cover - chart generation is best-effort
