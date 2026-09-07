@@ -41,7 +41,7 @@ def _cost_ceiling(cpi: float) -> float:
 
 
 def score_scenario(scenario: ScenarioResult, slip_before: int, spi: float, cpi: float, baseline_exposure: float) -> dict:
-    recovery = 40.0 * min(1.0, scenario.days_recovered / slip_before) if slip_before else 0.0
+    recovery = 40.0 * max(0.0, min(1.0, scenario.days_recovered / slip_before)) if slip_before else 0.0
 
     ceiling = _cost_ceiling(cpi)
     cost_component = 30.0 * max(0.0, 1.0 - scenario.cost_impact / ceiling)

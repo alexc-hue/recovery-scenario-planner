@@ -27,8 +27,8 @@ def add_performance_indices(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     out["sv"] = out["earned_value_cum"] - out["planned_value_cum"]
     out["cv"] = out["earned_value_cum"] - out["actual_cost_cum"]
-    out["spi"] = out["earned_value_cum"] / out["planned_value_cum"]
-    out["cpi"] = out["earned_value_cum"] / out["actual_cost_cum"]
+    out["spi"] = out["earned_value_cum"] / out["planned_value_cum"].replace(0, float("nan"))
+    out["cpi"] = out["earned_value_cum"] / out["actual_cost_cum"].replace(0, float("nan"))
     return out
 
 

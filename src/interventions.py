@@ -107,26 +107,27 @@ def add_resources(
     project_start: str,
     current_before_finish: pd.Timestamp,
     portfolio_exposure: float,
+    current_before_comparison: pd.DataFrame,
 ) -> ScenarioResult:
     """Crash the critical path: pay to shrink remaining duration on not-yet-complete critical activities."""
-    current_before = _current_cpm(activities, project_start)
-    comparison_before = sched.compare_schedules(activities, baseline_result, current_before)
-    critical_ids = set(comparison_before.loc[comparison_before["is_critical"], "activity_id"])
+    critical_ids = set(current_before_comparison.loc[current_before_comparison["is_critical"], "activity_id"])
 
     crashed = activities.copy()
-    total_days_cut = 0.0
+    total_days_cut = 0
     for i, row in crashed.iterrows():
         if row["activity_id"] in critical_ids and row["percent_complete"] < 100:
             remaining = row["current_duration_days"] * (1 - row["percent_complete"] / 100)
             cut = remaining * CRASH_PCT
-            crashed.at[i, "current_duration_days"] = max(1, round(row["current_duration_days"] - cut))
-            total_days_cut += cut
+            new_duration = max(1, round(row["current_duration_days"] - cut))
+            applied_cut = row["current_duration_days"] - new_duration
+            crashed.at[i, "current_duration_days"] = new_duration
+            total_days_cut += applied_cut
 
     current = _current_cpm(crashed, project_start)
     comparison = sched.compare_schedules(crashed, baseline_result, current)
     slip = (current.project_finish - baseline_result.project_finish).days
     days_recovered = (current_before_finish - current.project_finish).days
-    cost = round(total_days_cut) * CRASH_COST_PER_DAY
+    cost = total_days_cut * CRASH_COST_PER_DAY
 
     return ScenarioResult(
         name="add_resources",
@@ -159,9 +160,13 @@ def fast_track(
     """Re-sequence a stated sequential pair to run in parallel. No predecessor is deleted from
     the activities gating the pair, only the pair's own internal ordering is re-timed."""
     resequenced = activities.copy()
-    pred_map = dict(zip(resequenced["activity_id"], resequenced["predecessors"]))
+    original_pred_map = dict(zip(resequenced["activity_id"], resequenced["predecessors"]))
+    pred_map = dict(original_pred_map)
     for upstream, downstream in FAST_TRACK_PAIRS:
-        pred_map[downstream] = list(pred_map[upstream])
+        # Read from the original, unmutated map so a chained pair (upstream of
+        # one = downstream of another) can't pick up an already-overwritten
+        # predecessor list from an earlier iteration of this loop.
+        pred_map[downstream] = list(original_pred_map[upstream])
     resequenced["predecessors"] = resequenced["activity_id"].map(pred_map)
 
     current = _current_cpm(resequenced, project_start)

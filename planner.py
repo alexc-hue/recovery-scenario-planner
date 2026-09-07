@@ -88,7 +88,8 @@ def build_scenarios(activities, snapshots, portfolio_exposure):
 
     do_nothing = iv.do_nothing(activities, baseline_result, PROJECT_START, portfolio_exposure)
     add_resources = iv.add_resources(
-        activities, baseline_result, PROJECT_START, do_nothing.forecast_finish, portfolio_exposure
+        activities, baseline_result, PROJECT_START, do_nothing.forecast_finish, portfolio_exposure,
+        do_nothing.comparison,
     )
     fast_track = iv.fast_track(
         activities, baseline_result, PROJECT_START, do_nothing.forecast_finish, snapshots, portfolio_exposure
