@@ -27,6 +27,9 @@ def add_performance_indices(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     out["sv"] = out["earned_value_cum"] - out["planned_value_cum"]
     out["cv"] = out["earned_value_cum"] - out["actual_cost_cum"]
+    # Guard zero PV/AC the same way project_summary guards zero (bac - ac) for
+    # tcpi: a zero denominator can't yield a meaningful index, so report NaN
+    # instead of letting it silently become inf/-inf.
     out["spi"] = out["earned_value_cum"] / out["planned_value_cum"].replace(0, float("nan"))
     out["cpi"] = out["earned_value_cum"] / out["actual_cost_cum"].replace(0, float("nan"))
     return out
@@ -107,12 +110,15 @@ def change_impact_summary(changes: pd.DataFrame, bac: float) -> dict:
     }
 
 
-def forecast_completion_date(
-    milestones: pd.DataFrame, spi: float, project_start: str, planned_finish: str
-) -> pd.Timestamp:
-    """Simple SPI-based forecast: stretch remaining planned duration by 1/SPI."""
+def forecast_completion_date(spi: float, project_start: str, planned_finish: str):
+    """Simple SPI-based forecast: stretch remaining planned duration by 1/SPI.
+
+    Returns None (not yet forecastable) if SPI is zero/NaN, e.g. the first
+    reported period has no earned value yet, rather than raising
+    ZeroDivisionError.
+    """
+    if not spi or pd.isna(spi):
+        return None
     start = pd.Timestamp(project_start)
     planned_end = pd.Timestamp(planned_finish)
-    total_planned_days = (planned_end - start).days
-    forecast_days = total_planned_days / spi
-    return start + pd.Timedelta(days=round(forecast_days))
+    return start + (planned_end - start) / spi

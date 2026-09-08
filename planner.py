@@ -26,6 +26,7 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from engines import chart_style
 from engines.dashboard import metrics as dash
 from engines.risk import metrics as risk
 from engines.schedule import cpm as cpm_engine
@@ -41,31 +42,16 @@ BAC = 2_400_000
 PROJECT_START = "2026-01-05"
 STATUS_DATE = "2026-08-01"
 
-# Standardized chart color system (chart chrome, categorical series)
-CHART_BG = "#fcfcfb"
-INK = "#10182b"
-GRID = "#e1e0d9"
-
-
-def _apply_chrome(fig, axes) -> None:
-    """Apply the standardized chart chrome (background, ink, gridlines) to a figure."""
-    fig.patch.set_facecolor(CHART_BG)
-    if hasattr(axes, "flatten"):
-        axes = axes.flatten().tolist()
-    elif not isinstance(axes, (list, tuple)):
-        axes = [axes]
-    for ax in axes:
-        ax.set_facecolor(CHART_BG)
-        ax.title.set_color(INK)
-        ax.xaxis.label.set_color(INK)
-        ax.yaxis.label.set_color(INK)
-        ax.tick_params(colors=INK)
-        for spine in ax.spines.values():
-            spine.set_color(INK)
+# Chart generation is best-effort: these are the exception types matplotlib/
+# pandas/the filesystem can actually raise while building and saving a chart
+# (bad or missing data, an unwritable assets dir). Anything else propagates
+# instead of being silently swallowed.
+CHART_EXCEPTIONS = (ValueError, KeyError, TypeError, OSError, RuntimeError)
 
 
 def money(x: float) -> str:
-    return f"${x:,.0f}"
+    sign = "-" if x < 0 else ""
+    return f"{sign}${abs(x):,.0f}"
 
 
 def load_programme_status():
@@ -124,37 +110,37 @@ def print_comparison(baseline_result, scenarios, summary) -> None:
     print()
 
 
-def chart_comparison(scenarios, summary) -> str | None:
+def chart_comparison(scenarios) -> str | None:
     """Generate a simple before/after bar chart: forecast finish slip and revised EAC per option."""
     try:
         labels = [s.label for s in scenarios]
         slips = [s.slip_days for s in scenarios]
         costs = [s.cost_impact for s in scenarios]
-        colors = ["#2a78d6", "#eb6834", "#1baf7a"]
+        colors = [chart_style.SERIES_1, chart_style.SERIES_2, chart_style.SERIES_3]
 
         fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
 
         ax = axes[0]
         ax.barh(labels, slips, color=colors)
         ax.set_title("Forecast finish slip vs. baseline (days)")
-        ax.axvline(0, color=INK, linewidth=0.8, alpha=0.6)
-        ax.grid(color=GRID, linewidth=0.6, axis="x")
+        ax.axvline(0, color=chart_style.INK, linewidth=0.8, alpha=0.6)
+        ax.grid(color=chart_style.GRID, linewidth=0.6, axis="x")
 
         ax = axes[1]
         ax.barh(labels, costs, color=colors)
         ax.set_title("Incremental cost of the intervention ($)")
-        ax.grid(color=GRID, linewidth=0.6, axis="x")
+        ax.grid(color=chart_style.GRID, linewidth=0.6, axis="x")
 
-        _apply_chrome(fig, axes)
+        chart_style.apply_chrome(fig, axes)
         fig.suptitle("Recovery Scenario Comparison: Ridgeline LNG Compressor Station Retrofit",
-                     fontsize=12, color=INK)
+                     fontsize=12, color=chart_style.INK)
         fig.tight_layout()
         out_path = os.path.join(ASSETS_DIR, "before_after_comparison.png")
-        fig.savefig(out_path, dpi=140, facecolor=CHART_BG)
+        fig.savefig(out_path, dpi=140, facecolor=chart_style.CHART_BG)
         plt.close(fig)
         return out_path
-    except Exception as exc:  # pragma: no cover - chart generation is best-effort
-        print(f"(chart generation skipped: {exc})")
+    except CHART_EXCEPTIONS as exc:
+        print(f"(chart generation skipped: {exc!r})")
         return None
 
 
@@ -172,7 +158,7 @@ def main() -> None:
     )
     recommend.print_recommendation(ranked, summary["spi"], summary["cpi"], do_nothing.slip_days, portfolio_exposure)
 
-    chart_path = chart_comparison(scenarios, summary)
+    chart_path = chart_comparison(scenarios)
     if chart_path:
         print()
         print("-" * 68)

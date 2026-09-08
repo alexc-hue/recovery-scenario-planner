@@ -30,8 +30,13 @@ def run_baseline_and_current(activities: pd.DataFrame, project_start: str):
 
 
 def compare_schedules(activities: pd.DataFrame, baseline: cpm.CpmResult, current: cpm.CpmResult) -> pd.DataFrame:
+    # cpm.py internally collapses duplicate activity_id rows (dict keying keeps the
+    # last occurrence) before running CPM, so mirror that here: dedupe by activity_id,
+    # keeping the last occurrence, before merging/comparing. Otherwise a duplicate id
+    # in the input would double-count that activity against the deduped CPM output.
+    deduped_activities = activities.drop_duplicates(subset="activity_id", keep="last")
     merged = (
-        activities[["activity_id", "activity_name", "phase", "status", "percent_complete"]]
+        deduped_activities[["activity_id", "activity_name", "phase", "status", "percent_complete"]]
         .merge(
             baseline.schedule[["activity_id", "early_start", "early_finish", "total_float"]].rename(
                 columns={"early_start": "baseline_start", "early_finish": "baseline_finish",
@@ -55,7 +60,7 @@ def compare_schedules(activities: pd.DataFrame, baseline: cpm.CpmResult, current
 
 def schedule_health_score(comparison: pd.DataFrame, baseline_finish: pd.Timestamp, current_finish: pd.Timestamp) -> dict:
     slip_days = (current_finish - baseline_finish).days
-    schedule_score = max(0.0, 50.0 - slip_days * 1.5)
+    schedule_score = min(50.0, max(0.0, 50.0 - slip_days * 1.5))
 
     eroded_share = (comparison["float_erosion"] >= EROSION_THRESHOLD_DAYS).mean()
     erosion_score = 25.0 * (1 - eroded_share)

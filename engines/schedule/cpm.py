@@ -44,7 +44,7 @@ def run_cpm(activities: pd.DataFrame, duration_col: str, start_date: pd.Timestam
     for aid in order:
         es = max((early_finish[p] for p in preds[aid]), default=start_date)
         early_start[aid] = es
-        early_finish[aid] = es + pd.Timedelta(days=int(duration[aid]))
+        early_finish[aid] = es + pd.Timedelta(days=round(duration[aid]))
 
     project_finish = max(early_finish.values())
 
@@ -58,7 +58,7 @@ def run_cpm(activities: pd.DataFrame, duration_col: str, start_date: pd.Timestam
     for aid in reversed(order):
         lf = min((late_start[s] for s in successors[aid]), default=project_finish)
         late_finish[aid] = lf
-        late_start[aid] = lf - pd.Timedelta(days=int(duration[aid]))
+        late_start[aid] = lf - pd.Timedelta(days=round(duration[aid]))
 
     rows = []
     for aid in order:
