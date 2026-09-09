@@ -70,8 +70,9 @@ schedule-health-analyzer, project-controls-dashboard, and risk-trend-tracker,
 vendored unchanged, same pattern project-controls-reporting-engine already
 uses. No new CPM, EVM, or risk-scoring logic exists anywhere in this repo.
 The only new code is `src/interventions.py` (the three canned scenarios),
-`src/recommend.py` (the decision-rule table), and `planner.py`
-(orchestration). The sample data is the same fictional Ridgeline LNG
+`src/recommend.py` (the decision-rule table), `planner.py`
+(orchestration), and a small chart-style/formatting layer shared with the
+other five repos. The sample data is the same fictional Ridgeline LNG
 Compressor Station Retrofit programme project-controls-reporting-engine
 already uses, reused unchanged so both repos describe the same story from
 different angles.
@@ -85,7 +86,7 @@ Ridgeline LNG Compressor Station Retrofit, as of 2026-08-01
 ====================================================================
 
 Baseline finish:  2026-08-03
-Cost performance to date: SPI 0.85  CPI 0.91  EAC $2,637,363  VAC $-237,363
+Cost performance to date: SPI 0.85  CPI 0.91  EAC $2,637,363  VAC -$237,363
 
 Option                                    Finish       Days recov.  Cost impact   Revised EAC   Risk exposure
 ------------------------------------------------------------------------------------------------------------
