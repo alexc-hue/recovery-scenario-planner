@@ -110,15 +110,20 @@ def change_impact_summary(changes: pd.DataFrame, bac: float) -> dict:
     }
 
 
-def forecast_completion_date(spi: float, project_start: str, planned_finish: str):
+def forecast_completion_date(spi: float, project_start: str, planned_finish: str) -> pd.Timestamp | None:
     """Simple SPI-based forecast: stretch remaining planned duration by 1/SPI.
 
-    Returns None (not yet forecastable) if SPI is zero/NaN, e.g. the first
-    reported period has no earned value yet, rather than raising
-    ZeroDivisionError.
+    Returns None (not yet forecastable) if SPI is missing, NaN, zero, or
+    negative -- a zero or negative SPI has no meaningful "stretch factor"
+    and would otherwise forecast a finish date before project_start, rather
+    than raising ZeroDivisionError.
     """
-    if not spi or pd.isna(spi):
+    if spi is None or pd.isna(spi) or spi <= 0:
         return None
     start = pd.Timestamp(project_start)
     planned_end = pd.Timestamp(planned_finish)
-    return start + (planned_end - start) / spi
+    forecast = start + (planned_end - start) / spi
+    # Round to the nearest whole day: the division above leaves a fractional
+    # day that would otherwise floor-truncate wherever this is rendered as a
+    # date, silently shifting the displayed forecast a day earlier.
+    return forecast.round("D")

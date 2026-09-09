@@ -115,18 +115,17 @@ def mitigation_effectiveness(snapshots: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def risk_trajectory_score(
-    exposure_trend: pd.DataFrame, effectiveness: pd.DataFrame, snapshots: pd.DataFrame
-) -> dict:
-    first_total = exposure_trend["total_exposure"].iloc[0]
-    last_total = exposure_trend["total_exposure"].iloc[-1]
-    pct_change = (last_total - first_total) / first_total * 100 if first_total else 0.0
+def _shared_cohort_exposure(snapshots: pd.DataFrame) -> tuple[set, float, float, float]:
+    """Total exposure at the first and last snapshot dates, restricted to risks
+    present in both, plus the percent change between them.
 
-    # Churn control: the raw portfolio totals above move whenever risks are
-    # added to or dropped from the register, which isn't the same thing as
-    # existing risks getting better or worse. Score the trend only over risks
-    # present at BOTH the earliest and latest snapshot dates, so register
-    # growth/shrinkage can't masquerade as a real trajectory change.
+    Isolates the churn-control logic used by risk_trajectory_score: the raw
+    portfolio totals move whenever risks are added to or dropped from the
+    register, which isn't the same thing as existing risks getting better or
+    worse. Scoring the trend only over risks present at BOTH the earliest
+    and latest snapshot dates means register growth/shrinkage can't
+    masquerade as a real trajectory change.
+    """
     first_date = snapshots["snapshot_date"].min()
     last_date = snapshots["snapshot_date"].max()
     first_snap = snapshots[snapshots["snapshot_date"] == first_date]
@@ -139,6 +138,20 @@ def risk_trajectory_score(
         if shared_first_total
         else 0.0
     )
+    return shared_ids, shared_first_total, shared_last_total, shared_pct_change
+
+
+def risk_trajectory_score(effectiveness: pd.DataFrame, snapshots: pd.DataFrame) -> dict:
+    # Raw (uncontrolled) totals, all risks present at the first/last snapshot
+    # date -- same figures portfolio_exposure_trend(snapshots) would give for
+    # those two dates, derived directly here since only two dates are needed.
+    first_date = snapshots["snapshot_date"].min()
+    last_date = snapshots["snapshot_date"].max()
+    first_total = snapshots.loc[snapshots["snapshot_date"] == first_date, "exposure"].sum()
+    last_total = snapshots.loc[snapshots["snapshot_date"] == last_date, "exposure"].sum()
+    pct_change = (last_total - first_total) / first_total * 100 if first_total else 0.0
+
+    shared_ids, shared_first_total, shared_last_total, shared_pct_change = _shared_cohort_exposure(snapshots)
     trend_score = max(0.0, 50.0 - max(0.0, shared_pct_change) * 1.5)
 
     assessable = effectiveness[effectiveness["verdict"] != "Too early to assess"]

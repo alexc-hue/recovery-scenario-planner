@@ -1,12 +1,18 @@
-"""Standardized chart color system and chrome (chart chrome, categorical series).
+"""Standardized chart color system and chrome (categorical series).
 
-This module is identical, byte-for-byte, across all six repos in the
+The core palette (CHART_BG/INK/GRID/SERIES_1) and the apply_chrome() function
+are kept in sync, byte-for-byte, across all six repos in the
 github.com/alexc-hue project-controls toolkit (schedule-health-analyzer,
 project-controls-dashboard, change-control-register, risk-trend-tracker,
-project-controls-reporting-engine, recovery-scenario-planner). Each repo
-carries its own copy so it stays independently cloneable and runnable
-without pulling in the others, the same rationale the vendored engines
-already document. project-controls-dashboard is the canonical source; if
+project-controls-reporting-engine, recovery-scenario-planner). Beyond that
+shared core, each repo defines only the additional constants its own charts
+actually use -- SERIES_2/SERIES_3 for multi-series charts, the STATUS_*
+scale for status-colored charts, BASELINE for charts that plot a
+reference/baseline series -- so file contents diverge repo to repo by
+design, even though the shared core does not. Each repo carries its own
+copy so it stays independently cloneable and runnable without pulling in
+the others, the same rationale the vendored engines already document.
+project-controls-dashboard is the canonical source for the shared core; if
 the palette changes, update it there first and re-sync the rest.
 """
 

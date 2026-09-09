@@ -31,6 +31,7 @@ from engines.dashboard import metrics as dash
 from engines.risk import metrics as risk
 from engines.schedule import cpm as cpm_engine
 from engines.schedule import metrics as sched
+from engines.formatting import money
 
 from src import interventions as iv
 from src import recommend
@@ -42,16 +43,14 @@ BAC = 2_400_000
 PROJECT_START = "2026-01-05"
 STATUS_DATE = "2026-08-01"
 
-# Chart generation is best-effort: these are the exception types matplotlib/
-# pandas/the filesystem can actually raise while building and saving a chart
-# (bad or missing data, an unwritable assets dir). Anything else propagates
-# instead of being silently swallowed.
-CHART_EXCEPTIONS = (ValueError, KeyError, TypeError, OSError, RuntimeError)
-
-
-def money(x: float) -> str:
-    sign = "-" if x < 0 else ""
-    return f"{sign}${abs(x):,.0f}"
+# Chart generation is best-effort, but only for genuinely environmental
+# failure modes: an unwritable assets dir (OSError) or a matplotlib backend/
+# rendering failure (RuntimeError). KeyError/TypeError/ValueError are
+# deliberately NOT caught here -- those are exactly the exceptions a real
+# coding bug (a typo'd attribute, a wrong type passed in) would raise, and
+# swallowing them into a one-line "chart generation skipped" message would
+# hide the bug instead of surfacing it.
+CHART_EXCEPTIONS = (OSError, RuntimeError)
 
 
 def load_programme_status():
@@ -116,7 +115,17 @@ def chart_comparison(scenarios) -> str | None:
         labels = [s.label for s in scenarios]
         slips = [s.slip_days for s in scenarios]
         costs = [s.cost_impact for s in scenarios]
-        colors = [chart_style.SERIES_1, chart_style.SERIES_2, chart_style.SERIES_3]
+        # The palette assumes exactly 3 canned scenarios (do_nothing,
+        # add_resources, fast_track) by design. Assert that invariant with a
+        # clear message instead of cycling colors, which would silently
+        # assign two different scenarios the same color and misrepresent
+        # the chart -- a bad failure mode for a tool whose whole point is
+        # accurate reporting.
+        assert len(scenarios) <= 3, (
+            f"chart_comparison has only 3 palette colors but got {len(scenarios)} scenarios; "
+            "extend the palette deliberately before adding a 4th scenario"
+        )
+        colors = [chart_style.SERIES_1, chart_style.SERIES_2, chart_style.SERIES_3][:len(scenarios)]
 
         fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
 
