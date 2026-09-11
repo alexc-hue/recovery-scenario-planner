@@ -27,18 +27,25 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from engines import chart_style
-from engines.dashboard import metrics as dash
-from engines.risk import metrics as risk
+from engines.dashboard import metrics as dash_metrics
+from engines.risk import metrics as risk_metrics
 from engines.schedule import cpm as cpm_engine
-from engines.schedule import metrics as sched
+from engines.schedule import metrics as sched_metrics
 from engines.formatting import money
 
-from src import interventions as iv
+from src import interventions
 from src import recommend
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
 
+# Edit these to match your own recovery decision -- see README ("point this
+# at your own data"). They aren't read from the CSVs: BAC/PROJECT_START/
+# STATUS_DATE are this fictional programme's assumptions, and swapping in
+# your own CSVs without also updating these will compute a real recovery
+# decision against the wrong budget, dates, and status cutoff. See also
+# src/interventions.py for the intervention-specific parameters (which
+# activities to fast-track, crash percentage, cost-per-day, risk uplift).
 BAC = 2_400_000
 PROJECT_START = "2026-01-05"
 STATUS_DATE = "2026-08-01"
@@ -54,13 +61,13 @@ CHART_EXCEPTIONS = (OSError, RuntimeError)
 
 
 def load_programme_status():
-    activities = sched.load_activities(os.path.join(DATA_DIR, "activities.csv"))
+    activities = sched_metrics.load_activities(os.path.join(DATA_DIR, "activities.csv"))
 
-    ts = dash.load_timeseries(os.path.join(DATA_DIR, "cost_schedule_timeseries.csv"))
-    summary = dash.project_summary(ts, BAC)
+    ts = dash_metrics.load_timeseries(os.path.join(DATA_DIR, "cost_schedule_timeseries.csv"))
+    summary = dash_metrics.project_summary(ts, BAC)
 
-    snapshots = risk.load_snapshots(os.path.join(DATA_DIR, "risk_snapshots.csv"))
-    exposure_trend = risk.portfolio_exposure_trend(snapshots)
+    snapshots = risk_metrics.load_snapshots(os.path.join(DATA_DIR, "risk_snapshots.csv"))
+    exposure_trend = risk_metrics.portfolio_exposure_trend(snapshots)
     portfolio_exposure = float(exposure_trend["total_exposure"].iloc[-1])
 
     return activities, summary, snapshots, portfolio_exposure
@@ -71,13 +78,23 @@ def build_scenarios(activities, snapshots, portfolio_exposure):
         activities, duration_col="baseline_duration_days", start_date=pd.Timestamp(PROJECT_START)
     )
 
-    do_nothing = iv.do_nothing(activities, baseline_result, PROJECT_START, portfolio_exposure)
-    add_resources = iv.add_resources(
-        activities, baseline_result, PROJECT_START, do_nothing.forecast_finish, portfolio_exposure,
-        do_nothing.comparison,
+    do_nothing = interventions.do_nothing(
+        activities=activities, baseline_result=baseline_result, project_start=PROJECT_START,
+        portfolio_exposure=portfolio_exposure,
     )
-    fast_track = iv.fast_track(
-        activities, baseline_result, PROJECT_START, do_nothing.forecast_finish, snapshots, portfolio_exposure
+    # Keyword args here on purpose: add_resources and fast_track both take
+    # portfolio_exposure and a schedule/risk dataframe as their last two
+    # parameters, but in opposite order from each other, which is a real
+    # footgun for a positional call -- see each function's own signature.
+    add_resources = interventions.add_resources(
+        activities=activities, baseline_result=baseline_result, project_start=PROJECT_START,
+        current_before_finish=do_nothing.forecast_finish, portfolio_exposure=portfolio_exposure,
+        current_before_comparison=do_nothing.comparison,
+    )
+    fast_track = interventions.fast_track(
+        activities=activities, baseline_result=baseline_result, project_start=PROJECT_START,
+        current_before_finish=do_nothing.forecast_finish, risk_snapshots=snapshots,
+        portfolio_exposure=portfolio_exposure,
     )
 
     return baseline_result, [do_nothing, add_resources, fast_track]

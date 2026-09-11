@@ -178,4 +178,6 @@ and `data/risk_snapshots.csv` (same schemas as schedule-health-analyzer,
 project-controls-dashboard, and risk-trend-tracker) and adjust the
 parameters at the top of `src/interventions.py` (which activities to
 fast-track, crash percentage, cost-per-day, risk uplift) to point this at a
-real recovery decision.
+real recovery decision. The `BAC`/`PROJECT_START`/`STATUS_DATE` constants
+near the top of `planner.py` are this fictional programme's assumptions
+too, not read from the CSVs, so update those by hand as well.

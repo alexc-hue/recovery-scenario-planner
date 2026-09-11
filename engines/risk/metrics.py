@@ -6,6 +6,8 @@ Vendored unchanged from github.com/alexc-hue/risk-trend-tracker
 
 from __future__ import annotations
 
+from typing import NamedTuple
+
 import pandas as pd
 
 TREND_THRESHOLD = 2  # exposure delta at or beyond this counts as worsening/improving, not stable
@@ -115,9 +117,25 @@ def mitigation_effectiveness(snapshots: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _shared_cohort_exposure(snapshots: pd.DataFrame) -> tuple[set, float, float, float]:
-    """Total exposure at the first and last snapshot dates, restricted to risks
-    present in both, plus the percent change between them.
+class _CohortExposure(NamedTuple):
+    """Raw and churn-controlled exposure totals at the first/last snapshot dates.
+
+    Computed together in one pass over `snapshots` so risk_trajectory_score
+    doesn't have to re-derive the same first/last-date filtering twice.
+    """
+    shared_ids: set
+    first_total: float
+    last_total: float
+    pct_change: float
+    shared_first_total: float
+    shared_last_total: float
+    shared_pct_change: float
+
+
+def _shared_cohort_exposure(snapshots: pd.DataFrame) -> _CohortExposure:
+    """Total exposure at the first and last snapshot dates -- both the raw
+    (all risks present at that date) and the churn-controlled (risks present
+    at BOTH dates) versions, plus the percent change for each.
 
     Isolates the churn-control logic used by risk_trajectory_score: the raw
     portfolio totals move whenever risks are added to or dropped from the
@@ -130,6 +148,11 @@ def _shared_cohort_exposure(snapshots: pd.DataFrame) -> tuple[set, float, float,
     last_date = snapshots["snapshot_date"].max()
     first_snap = snapshots[snapshots["snapshot_date"] == first_date]
     last_snap = snapshots[snapshots["snapshot_date"] == last_date]
+
+    first_total = first_snap["exposure"].sum()
+    last_total = last_snap["exposure"].sum()
+    pct_change = (last_total - first_total) / first_total * 100 if first_total else 0.0
+
     shared_ids = set(first_snap["risk_id"]) & set(last_snap["risk_id"])
     shared_first_total = first_snap.loc[first_snap["risk_id"].isin(shared_ids), "exposure"].sum()
     shared_last_total = last_snap.loc[last_snap["risk_id"].isin(shared_ids), "exposure"].sum()
@@ -138,21 +161,13 @@ def _shared_cohort_exposure(snapshots: pd.DataFrame) -> tuple[set, float, float,
         if shared_first_total
         else 0.0
     )
-    return shared_ids, shared_first_total, shared_last_total, shared_pct_change
+    return _CohortExposure(shared_ids, first_total, last_total, pct_change,
+                            shared_first_total, shared_last_total, shared_pct_change)
 
 
 def risk_trajectory_score(effectiveness: pd.DataFrame, snapshots: pd.DataFrame) -> dict:
-    # Raw (uncontrolled) totals, all risks present at the first/last snapshot
-    # date -- same figures portfolio_exposure_trend(snapshots) would give for
-    # those two dates, derived directly here since only two dates are needed.
-    first_date = snapshots["snapshot_date"].min()
-    last_date = snapshots["snapshot_date"].max()
-    first_total = snapshots.loc[snapshots["snapshot_date"] == first_date, "exposure"].sum()
-    last_total = snapshots.loc[snapshots["snapshot_date"] == last_date, "exposure"].sum()
-    pct_change = (last_total - first_total) / first_total * 100 if first_total else 0.0
-
-    shared_ids, shared_first_total, shared_last_total, shared_pct_change = _shared_cohort_exposure(snapshots)
-    trend_score = max(0.0, 50.0 - max(0.0, shared_pct_change) * 1.5)
+    cohort = _shared_cohort_exposure(snapshots)
+    trend_score = max(0.0, 50.0 - max(0.0, cohort.shared_pct_change) * 1.5)
 
     assessable = effectiveness[effectiveness["verdict"] != "Too early to assess"]
     effective_count = (assessable["verdict"] == "Effective").sum()
@@ -162,13 +177,13 @@ def risk_trajectory_score(effectiveness: pd.DataFrame, snapshots: pd.DataFrame) 
 
     total = trend_score + mitigation_score
     return {
-        "first_total_exposure": first_total,
-        "last_total_exposure": last_total,
-        "exposure_pct_change": round(pct_change, 1),
-        "shared_risk_count": len(shared_ids),
-        "shared_first_exposure": shared_first_total,
-        "shared_last_exposure": shared_last_total,
-        "shared_exposure_pct_change": round(shared_pct_change, 1),
+        "first_total_exposure": cohort.first_total,
+        "last_total_exposure": cohort.last_total,
+        "exposure_pct_change": round(cohort.pct_change, 1),
+        "shared_risk_count": len(cohort.shared_ids),
+        "shared_first_exposure": cohort.shared_first_total,
+        "shared_last_exposure": cohort.shared_last_total,
+        "shared_exposure_pct_change": round(cohort.shared_pct_change, 1),
         "trend_score": round(trend_score, 1),
         "mitigation_score": round(mitigation_score, 1),
         "total_score": round(max(0.0, min(100.0, total)), 1),

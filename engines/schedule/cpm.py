@@ -35,6 +35,9 @@ def _topological_order(activities: pd.DataFrame) -> list[str]:
 
 
 def run_cpm(activities: pd.DataFrame, duration_col: str, start_date: pd.Timestamp) -> CpmResult:
+    if activities.empty:
+        raise ValueError("No activities found in activities.csv")
+
     order = _topological_order(activities)
     duration = dict(zip(activities["activity_id"], activities[duration_col]))
     preds = dict(zip(activities["activity_id"], activities["predecessors"]))

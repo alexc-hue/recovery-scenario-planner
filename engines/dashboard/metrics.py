@@ -37,7 +37,10 @@ def add_performance_indices(df: pd.DataFrame) -> pd.DataFrame:
 
 def project_summary(df: pd.DataFrame, bac: float) -> dict:
     """Headline EVM figures as of the latest period with actuals."""
-    latest = add_performance_indices(actuals_only(df)).iloc[-1]
+    actuals = actuals_only(df)
+    if actuals.empty:
+        raise ValueError("No period has both earned_value_cum and actual_cost_cum populated yet")
+    latest = add_performance_indices(actuals).iloc[-1]
 
     pv, ev, ac = latest["planned_value_cum"], latest["earned_value_cum"], latest["actual_cost_cum"]
     spi, cpi = latest["spi"], latest["cpi"]
@@ -54,9 +57,11 @@ def project_summary(df: pd.DataFrame, bac: float) -> dict:
         "ev": ev,
         "ac": ac,
         "sv": ev - pv,
-        "sv_pct": (ev - pv) / pv * 100,
+        # Same zero-denominator guard as spi/cpi above: a zero pv or ev can't
+        # yield a meaningful percentage, so report NaN instead of inf/-inf.
+        "sv_pct": (ev - pv) / pv * 100 if pv else float("nan"),
         "cv": ev - ac,
-        "cv_pct": (ev - ac) / ev * 100,
+        "cv_pct": (ev - ac) / ev * 100 if ev else float("nan"),
         "spi": spi,
         "cpi": cpi,
         "percent_complete": ev / bac * 100,
@@ -70,9 +75,17 @@ def project_summary(df: pd.DataFrame, bac: float) -> dict:
 def load_milestones(path: str) -> pd.DataFrame:
     df = pd.read_csv(path, parse_dates=["planned_date", "current_date"])
     df["slip_days"] = (df["current_date"] - df["planned_date"]).dt.days
-    df["milestone_status"] = df["slip_days"].apply(
-        lambda d: "On Track" if d <= 0 else ("At Risk" if d <= 14 else "Delayed")
-    )
+
+    def _status(slip) -> str:
+        # A missing planned/current date leaves slip_days as NaN. NaN <=
+        # comparisons are always False, so without this explicit branch a
+        # missing-date row would silently fall through to "Delayed" instead
+        # of being flagged as a data-quality gap.
+        if pd.isna(slip):
+            return "Date Missing"
+        return "On Track" if slip <= 0 else ("At Risk" if slip <= 14 else "Delayed")
+
+    df["milestone_status"] = df["slip_days"].apply(_status)
     return df
 
 
@@ -110,7 +123,7 @@ def change_impact_summary(changes: pd.DataFrame, bac: float) -> dict:
     }
 
 
-def forecast_completion_date(spi: float, project_start: str, planned_finish: str) -> pd.Timestamp | None:
+def forecast_completion_date(spi: float | None, project_start: str, planned_finish: str) -> pd.Timestamp | None:
     """Simple SPI-based forecast: stretch remaining planned duration by 1/SPI.
 
     Returns None (not yet forecastable) if SPI is missing, NaN, zero, or

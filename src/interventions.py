@@ -119,7 +119,11 @@ def add_resources(
             remaining = row["current_duration_days"] * (1 - row["percent_complete"] / 100)
             cut = remaining * CRASH_PCT
             new_duration = max(1, round(row["current_duration_days"] - cut))
-            applied_cut = row["current_duration_days"] - new_duration
+            # Clamp to zero: for a very short activity, the 1-day crash floor
+            # above can land AT OR ABOVE its current duration (nothing left to
+            # cut), which would otherwise make applied_cut negative and
+            # silently corrupt the aggregated total_days_cut/reported benefit.
+            applied_cut = max(0, row["current_duration_days"] - new_duration)
             crashed.at[i, "current_duration_days"] = new_duration
             total_days_cut += applied_cut
 

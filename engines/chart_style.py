@@ -1,19 +1,15 @@
 """Standardized chart color system and chrome (categorical series).
 
-The core palette (CHART_BG/INK/GRID/SERIES_1) and the apply_chrome() function
-are kept in sync, byte-for-byte, across all six repos in the
-github.com/alexc-hue project-controls toolkit (schedule-health-analyzer,
-project-controls-dashboard, change-control-register, risk-trend-tracker,
-project-controls-reporting-engine, recovery-scenario-planner). Beyond that
-shared core, each repo defines only the additional constants its own charts
-actually use -- SERIES_2/SERIES_3 for multi-series charts, the STATUS_*
-scale for status-colored charts, BASELINE for charts that plot a
-reference/baseline series -- so file contents diverge repo to repo by
-design, even though the shared core does not. Each repo carries its own
-copy so it stays independently cloneable and runnable without pulling in
-the others, the same rationale the vendored engines already document.
-project-controls-dashboard is the canonical source for the shared core; if
-the palette changes, update it there first and re-sync the rest.
+CHART_BG/INK/GRID/SERIES_1 and apply_chrome() stay byte-for-byte identical
+across all six github.com/alexc-hue project-controls repos (schedule-health-
+analyzer, project-controls-dashboard, change-control-register,
+risk-trend-tracker, project-controls-reporting-engine,
+recovery-scenario-planner); each repo adds only the extra constants its own
+charts use (SERIES_2/3, STATUS_*, BASELINE), so files diverge beyond that
+shared core by design. Each repo carries its own copy so it stays
+independently cloneable and runnable on its own. project-controls-dashboard
+is the canonical source for the shared core -- update it there first, then
+re-sync the rest.
 """
 
 from __future__ import annotations
