@@ -1,5 +1,7 @@
 # Recovery Scenario Planner
 
+![CI](https://github.com/alexc-hue/recovery-scenario-planner/actions/workflows/tests.yml/badge.svg)
+
 The other five tools in this toolkit report a status. None of them answer
 the next question a sponsor actually asks: "so what do we do about it."
 This one does. Point it at a programme's current SPI/CPI, critical-path
