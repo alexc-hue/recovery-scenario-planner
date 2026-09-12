@@ -1,6 +1,6 @@
 # Recovery Scenario Planner
 
-![CI](https://github.com/alexc-hue/recovery-scenario-planner/actions/workflows/tests.yml/badge.svg)
+![CI](https://github.com/alexc-hue/recovery-scenario-planner/actions/workflows/tests.yml/badge.svg) [![codecov](https://codecov.io/gh/alexc-hue/recovery-scenario-planner/graph/badge.svg)](https://codecov.io/gh/alexc-hue/recovery-scenario-planner) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)
 
 The other five tools in this toolkit report a status. None of them answer
 the next question a sponsor actually asks: "so what do we do about it."
