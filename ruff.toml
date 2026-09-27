@@ -1,0 +1,18 @@
+# Lint config shared across the project-controls toolkit repos.
+# Local runs and CI read this same file, so both apply the same rules.
+target-version = "py311"
+
+[lint]
+select = [
+    "E4", "E7", "E9",  # pycodestyle errors (imports, statements, syntax)
+    "F",               # pyflakes: unused imports/variables, undefined names
+    "I",               # import ordering
+    "B",               # bugbear: likely bugs
+    "UP",              # pyupgrade: modern syntax for the target version
+]
+# zip() here always pairs columns of the same DataFrame, so the lengths are
+# equal by construction; strict= would add noise without catching anything.
+ignore = ["B905"]
+
+[lint.isort]
+known-first-party = ["src", "engines"]

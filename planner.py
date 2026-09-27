@@ -28,13 +28,11 @@ import pandas as pd
 
 from engines import chart_style
 from engines.dashboard import metrics as dash_metrics
+from engines.formatting import money
 from engines.risk import metrics as risk_metrics
 from engines.schedule import cpm as cpm_engine
 from engines.schedule import metrics as sched_metrics
-from engines.formatting import money
-
-from src import interventions
-from src import recommend
+from src import interventions, recommend
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
