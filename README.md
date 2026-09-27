@@ -116,6 +116,8 @@ Current status: SPI 0.85  CPI 0.91  critical-path delay +30d  portfolio risk exp
 RECOMMENDATION: Re-sequence / fast-track (fit score 56.5/100).
 ```
 
+This block is checked in CI against what the script actually prints (see `tests/test_readme_result.py`), so it can't quietly fall out of date.
+
 Fast-tracking recovers half the delay (15 of 30 days) at 6% of crashing's
 cost ($3,000 against $50,000) and clearly outranks it, the same trade-off
 behind the real recovery this tool is modeled on: re-sequencing beat
