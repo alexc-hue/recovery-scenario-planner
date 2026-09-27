@@ -1,0 +1,41 @@
+{
+  "_about": "Vendored copies of modules from the standalone toolkit repos. Fingerprints ignore the module docstring and apply the listed import rewrites; see scripts/vendored.py.",
+  "files": {
+    "engines/dashboard/metrics.py": {
+      "source_repo": "alexc-hue/project-controls-dashboard",
+      "source_path": "src/metrics.py",
+      "source_commit": "3e12a36b4385577daa461b115e6d71fd6bd6fb06",
+      "fingerprint": "52db47396150a3c5a603f79099c5ac1efb7f9dbebc2331dac10d7b52b7991144"
+    },
+    "engines/formatting.py": {
+      "source_repo": "alexc-hue/project-controls-dashboard",
+      "source_path": "src/formatting.py",
+      "source_commit": "d724d531d9cfe382dfb8edd453a3a50f627a8075",
+      "fingerprint": "1fcaaa14cb4070931c487e1cdc219b4a8c41277a605201a1fde57f15a4b58db3"
+    },
+    "engines/risk/metrics.py": {
+      "source_repo": "alexc-hue/risk-trend-tracker",
+      "source_path": "src/metrics.py",
+      "source_commit": "4dee87432f3a6f75cdc6754aabf7b55822b9d5d0",
+      "fingerprint": "b0a2bc5ca5f2a393ab692c522a9d16feeecd6271b8a39871a51a6dfc1b5801c4"
+    },
+    "engines/schedule/cpm.py": {
+      "source_repo": "alexc-hue/schedule-health-analyzer",
+      "source_path": "src/cpm.py",
+      "source_commit": "5099dc78efeb8fa351c0d4539a87015069411d98",
+      "fingerprint": "d21ec32bfc7f12fab932ef680234aa07b8e154b744002b1ccbae9f9c1cf1ea8f"
+    },
+    "engines/schedule/metrics.py": {
+      "source_repo": "alexc-hue/schedule-health-analyzer",
+      "source_path": "src/metrics.py",
+      "source_commit": "cb6b6f946bd00c8e1d932818a19225bed1eee60c",
+      "fingerprint": "b3bd606daee0fb45b2284238cf2eee87ec887a4684e392581f75a131fc8a72e5",
+      "rewrites": [
+        [
+          "from src import cpm",
+          "from engines.schedule import cpm"
+        ]
+      ]
+    }
+  }
+}

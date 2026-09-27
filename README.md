@@ -79,6 +79,10 @@ Compressor Station Retrofit programme project-controls-reporting-engine
 already uses, reused unchanged so both repos describe the same story from
 different angles.
 
+Each copy is listed in `engines/VENDORED.json` with the source commit it came
+from. The tests check that no copy has been edited here, and a separate CI job
+(on every push and weekly) checks that no source has moved on since.
+
 ## Result
 
 ```
