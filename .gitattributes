@@ -1,0 +1,4 @@
+# Keep text files LF in the repo and in working copies on every OS, so
+# formatters and diffs behave the same on Windows as in CI.
+* text=auto eol=lf
+*.png binary
