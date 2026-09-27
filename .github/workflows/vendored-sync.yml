@@ -1,0 +1,24 @@
+name: Vendored engines in sync
+
+# Checks that each source module in the standalone toolkit repos still
+# matches the copy vendored under engines/. Runs on every push, weekly (to
+# catch a source repo changing on its own), and on demand.
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  check-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compare vendored copies with their sources on main
+        run: python scripts/vendored.py check-upstream --ref main
