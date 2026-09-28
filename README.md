@@ -189,3 +189,8 @@ fast-track, crash percentage, cost-per-day, risk uplift) to point this at a
 real recovery decision. The `BAC`/`PROJECT_START`/`STATUS_DATE` constants
 near the top of `planner.py` are this fictional programme's assumptions
 too, not read from the CSVs, so update those by hand as well.
+
+To see how it copes with bigger generated schedules, run `python
+benchmarks/size_test.py`. It prints run time and peak memory at each size.
+It's a hand-run check, not part of the test suite; measured numbers are
+under Limitations.
