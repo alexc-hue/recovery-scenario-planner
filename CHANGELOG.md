@@ -4,6 +4,23 @@ All notable changes to this project are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and version numbers
 follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-09-28
+
+Performance at larger sizes. Output is unchanged: the console report is byte-identical to the previous release on the sample data and on generated inputs, and the comparison chart renders pixel-identical, so no committed image changed.
+
+### Added
+
+- `benchmarks/size_test.py`, a hand-run size test: generates bigger inputs, runs the tool end to end
+  and prints run time and peak memory. Not part of CI or the test suite.
+- Measured size-test numbers in the README's Limitations section.
+
+### Changed
+
+- The vendored CPM engine re-copied from schedule-health-analyzer for its single-pass network
+  ordering (same order, same results).
+- The vendored risk engine re-copied from risk-trend-tracker for its per-risk rewrite (same
+  results). 50,000 activities now run in about 19 seconds.
+
 ## [1.1.0] - 2026-09-28
 
 Checks and tests only. The tool's output is unchanged.
@@ -28,5 +45,6 @@ Checks and tests only. The tool's output is unchanged.
 
 First tagged release, marking the state of the repo before this changelog started. Models three recovery options (add resources, fast-track, accept the delay) with the vendored CPM engine and ranks them against schedule, cost and risk with a stated decision-rule table. Includes the fixes from code review, a pytest suite and CI.
 
+[1.2.0]: https://github.com/alexc-hue/recovery-scenario-planner/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/alexc-hue/recovery-scenario-planner/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/alexc-hue/recovery-scenario-planner/releases/tag/v1.0.0
