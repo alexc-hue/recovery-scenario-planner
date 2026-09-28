@@ -16,8 +16,8 @@
     "engines/risk/metrics.py": {
       "source_repo": "alexc-hue/risk-trend-tracker",
       "source_path": "src/metrics.py",
-      "source_commit": "4dee87432f3a6f75cdc6754aabf7b55822b9d5d0",
-      "fingerprint": "b0a2bc5ca5f2a393ab692c522a9d16feeecd6271b8a39871a51a6dfc1b5801c4"
+      "source_commit": "280cd60ed8eec1a481f4ebf63e12dddb06b00f65",
+      "fingerprint": "468c37a96eef700d20a74d580fc8f4e159c62252d2be17644e17a79d562691d9"
     },
     "engines/schedule/cpm.py": {
       "source_repo": "alexc-hue/schedule-health-analyzer",

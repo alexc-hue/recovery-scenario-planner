@@ -44,13 +44,20 @@ def _delta_trend(delta: float) -> str:
 def per_risk_trajectory(snapshots: pd.DataFrame, latest_snapshot: pd.Timestamp) -> pd.DataFrame:
     """First vs. last recorded exposure per risk, classified as a trend."""
     has_status = "status" in snapshots.columns and snapshots["status"].notna().any()
+    # One sort and two drop_duplicates replace a Python loop over every risk's
+    # group; the rows and their order are the same as grouping by risk_id.
+    ordered = snapshots[snapshots["risk_id"].notna()].sort_values(["risk_id", "snapshot_date"], kind="stable")
+    firsts = ordered.drop_duplicates("risk_id", keep="first")
+    lasts = ordered.drop_duplicates("risk_id", keep="last")
+    last_statuses = lasts["status"] if has_status else pd.Series([None] * len(lasts))
     rows = []
-    for risk_id, group in snapshots.groupby("risk_id"):
-        group = group.sort_values("snapshot_date")
-        first, last = group.iloc[0], group.iloc[-1]
-        delta = last["exposure"] - first["exposure"]
-        missing_from_latest = last["snapshot_date"] < latest_snapshot
-        last_status = str(last["status"]).strip().lower() if has_status and pd.notna(last.get("status")) else ""
+    for first_date, first_exp, last_date, last_exp, risk_id, description, category, status in zip(
+        firsts["snapshot_date"], firsts["exposure"], lasts["snapshot_date"], lasts["exposure"],
+        lasts["risk_id"], lasts["description"], lasts["category"], last_statuses,
+    ):
+        delta = last_exp - first_exp
+        missing_from_latest = last_date < latest_snapshot
+        last_status = str(status).strip().lower() if has_status and pd.notna(status) else ""
 
         if last_status in CLOSED_STATUSES:
             # The register's own status field says this risk is done -- trust it
@@ -68,12 +75,12 @@ def per_risk_trajectory(snapshots: pd.DataFrame, latest_snapshot: pd.Timestamp) 
             trend = _delta_trend(delta)
         rows.append({
             "risk_id": risk_id,
-            "description": last["description"],
-            "category": last["category"],
-            "first_snapshot": first["snapshot_date"],
-            "first_exposure": first["exposure"],
-            "last_snapshot": last["snapshot_date"],
-            "last_exposure": last["exposure"],
+            "description": description,
+            "category": category,
+            "first_snapshot": first_date,
+            "first_exposure": first_exp,
+            "last_snapshot": last_date,
+            "last_exposure": last_exp,
             "delta": delta,
             "trend": trend,
         })
@@ -82,34 +89,37 @@ def per_risk_trajectory(snapshots: pd.DataFrame, latest_snapshot: pd.Timestamp) 
 
 def mitigation_effectiveness(snapshots: pd.DataFrame) -> pd.DataFrame:
     """For risks with a mitigation due date, compare avg exposure before vs after it."""
+    by_risk = snapshots.groupby("risk_id", sort=True)
+    # Use the most recently recorded due date, not the earliest -- a later
+    # reschedule of the mitigation deadline should not be silently ignored.
+    # (GroupBy.last skips missing values, so this is the last recorded one.)
+    due = by_risk["mitigation_due_date"].last().dropna()
+    descriptions = snapshots.drop_duplicates("risk_id", keep="first").set_index("risk_id")["description"]
+
+    row_due = snapshots["risk_id"].map(due)
+    before = snapshots[snapshots["snapshot_date"] < row_due].groupby("risk_id")["exposure"].mean()
+    # Strictly after: a snapshot dated exactly on the due date has zero
+    # elapsed observation time and shouldn't count as post-mitigation.
+    after = snapshots[snapshots["snapshot_date"] > row_due].groupby("risk_id")["exposure"].mean()
+
     rows = []
-    for risk_id, group in snapshots.groupby("risk_id"):
-        # Use the most recently recorded due date, not the earliest -- a later
-        # reschedule of the mitigation deadline should not be silently ignored.
-        due_series = group["mitigation_due_date"].dropna()
-        due = due_series.iloc[-1] if not due_series.empty else pd.NaT
-        if pd.isna(due):
-            continue
-        before = group[group["snapshot_date"] < due]["exposure"]
-        # Strictly after: a snapshot dated exactly on the due date has zero
-        # elapsed observation time and shouldn't count as post-mitigation.
-        after = group[group["snapshot_date"] > due]["exposure"]
-        if before.empty or after.empty:
+    for risk_id, due_date in due.items():
+        avg_before = before.get(risk_id, float("nan"))
+        avg_after = after.get(risk_id, float("nan"))
+        # "Too early" means no snapshots on one side of the due date at all,
+        # not an average that happens to be missing.
+        if risk_id not in before.index or risk_id not in after.index:
             verdict = "Too early to assess"
-            avg_before = before.mean() if not before.empty else float("nan")
-            avg_after = after.mean() if not after.empty else float("nan")
+        elif avg_after < avg_before:
+            verdict = "Effective"
+        elif avg_after > avg_before:
+            verdict = "Ineffective"
         else:
-            avg_before, avg_after = before.mean(), after.mean()
-            if avg_after < avg_before:
-                verdict = "Effective"
-            elif avg_after > avg_before:
-                verdict = "Ineffective"
-            else:
-                verdict = "Held Steady"
+            verdict = "Held Steady"
         rows.append({
             "risk_id": risk_id,
-            "description": group["description"].iloc[0],
-            "mitigation_due_date": due,
+            "description": descriptions[risk_id],
+            "mitigation_due_date": due_date,
             "avg_exposure_before": avg_before,
             "avg_exposure_after": avg_after,
             "verdict": verdict,
