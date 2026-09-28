@@ -19,18 +19,36 @@ class CpmResult:
 
 
 def _topological_order(activities: pd.DataFrame) -> list[str]:
+    """Activities in dependency order, one pass over the network.
+
+    Activities are released in rounds: round 0 is everything with no
+    predecessors, and each later round is everything whose last predecessor
+    was released in the round before. Within a round, activity IDs are sorted,
+    so the order is the same on every run. Each link is visited once, so the
+    cost grows with activities + links rather than activities x rounds.
+    """
     predecessors = {row.activity_id: set(row.predecessors) for row in activities.itertuples()}
-    remaining = dict(predecessors)
+    waiting_on = {aid: len(preds) for aid, preds in predecessors.items()}
+    successors: dict[str, list[str]] = {}
+    for aid, preds in predecessors.items():
+        for p in preds:
+            successors.setdefault(p, []).append(aid)
+
     resolved: list[str] = []
-    resolved_set: set[str] = set()
-    while remaining:
-        ready = sorted(aid for aid, preds in remaining.items() if preds <= resolved_set)
-        if not ready:
-            raise ValueError("Cycle detected in activity network (or an unknown predecessor id).")
+    ready = sorted(aid for aid, count in waiting_on.items() if count == 0)
+    while ready:
+        resolved.extend(ready)
+        released = []
         for aid in ready:
-            resolved.append(aid)
-            resolved_set.add(aid)
-            del remaining[aid]
+            for succ in successors.get(aid, ()):
+                waiting_on[succ] -= 1
+                if waiting_on[succ] == 0:
+                    released.append(succ)
+        ready = sorted(released)
+    if len(resolved) < len(predecessors):
+        # Anything left is on a cycle, or waits on a predecessor ID that isn't
+        # in the activity list, so it can never be released.
+        raise ValueError("Cycle detected in activity network (or an unknown predecessor id).")
     return resolved
 
 

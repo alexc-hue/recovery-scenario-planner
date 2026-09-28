@@ -22,8 +22,8 @@
     "engines/schedule/cpm.py": {
       "source_repo": "alexc-hue/schedule-health-analyzer",
       "source_path": "src/cpm.py",
-      "source_commit": "5099dc78efeb8fa351c0d4539a87015069411d98",
-      "fingerprint": "d21ec32bfc7f12fab932ef680234aa07b8e154b744002b1ccbae9f9c1cf1ea8f"
+      "source_commit": "663c6871b63c593441b16a908b7fe2c2103209db",
+      "fingerprint": "8f97215dfd793c14a9a94309268a3576a67b2755cb61e7777df8701c24fc29f0"
     },
     "engines/schedule/metrics.py": {
       "source_repo": "alexc-hue/schedule-health-analyzer",
