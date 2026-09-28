@@ -160,6 +160,10 @@ side by side for all three options.
   the programme's remaining commissioning activities in this dataset is a
   genuine low-value candidate to cut, and fabricating one just to fill a
   fourth slot would have been less honest than leaving it out.
+- Size-tested with `benchmarks/size_test.py` on a 2018 laptop (Intel
+  i7-8750H, Python 3.14), single runs, so treat the numbers as a guide: all
+  three scenarios and four CPM passes run in about 1 second for 1,000
+  activities, 4 seconds for 10,000 and 19 seconds for 50,000.
 
 ## What I learned
 
