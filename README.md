@@ -10,13 +10,17 @@ options, add resources, re-sequence, accept the delay, against the same
 CPM/EVM math the rest of the toolkit already uses, then ranks them with a
 stated, one-sentence-per-option rationale instead of a gut call.
 
-Part of a small project-controls toolkit:
+The project-controls toolkit is six tools:
 [project-controls-dashboard](https://github.com/alexc-hue/project-controls-dashboard),
 [schedule-health-analyzer](https://github.com/alexc-hue/schedule-health-analyzer),
 [change-control-register](https://github.com/alexc-hue/change-control-register),
 [risk-trend-tracker](https://github.com/alexc-hue/risk-trend-tracker),
 [project-controls-reporting-engine](https://github.com/alexc-hue/project-controls-reporting-engine),
 **recovery-scenario-planner** (this repo).
+Two separate practice models apply the same methods to data center
+delivery, on synthetic data:
+[commissioning-readiness-gate](https://github.com/alexc-hue/commissioning-readiness-gate),
+[facility-status-digital-twin](https://github.com/alexc-hue/facility-status-digital-twin).
 
 ![Before/after comparison](assets/before_after_comparison.png)
 
