@@ -5,3 +5,12 @@ venv/
 .coverage
 coverage.xml
 .pytest_cache/
+.env
+.env.*
+.ruff_cache/
+htmlcov/
+build/
+dist/
+*.egg-info/
+.idea/
+.vscode/
