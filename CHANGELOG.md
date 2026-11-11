@@ -4,6 +4,20 @@ All notable changes to this project are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and version numbers
 follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] - 2026-11-12
+
+Maintenance release. The tool's output is unchanged.
+
+### Changed
+
+- `pytest>=9.0.3` in `requirements-dev.txt` (was `>=7.0`).
+- CI runs the tests on Python 3.11, 3.12, 3.13 and 3.14 (was 3.11 and 3.12).
+- CI actions are updated (checkout v7.0.1, setup-python v7.1.0, codecov-action v7.1.1) and pinned
+  to commit SHAs, not tags.
+- README: the list of related repos is the same in all eight repos now. It names the six toolkit
+  tools, then the two data center practice models separately.
+- `.gitignore` also covers `.env` files, ruff and coverage caches, build output and editor folders.
+
 ## [1.2.0] - 2026-09-28
 
 Performance at larger sizes. Output is unchanged: the console report is byte-identical to the previous release on the sample data and on generated inputs, and the comparison chart renders pixel-identical, so no committed image changed.
@@ -45,6 +59,7 @@ Checks and tests only. The tool's output is unchanged.
 
 First tagged release, marking the state of the repo before this changelog started. Models three recovery options (add resources, fast-track, accept the delay) with the vendored CPM engine and ranks them against schedule, cost and risk with a stated decision-rule table. Includes the fixes from code review, a pytest suite and CI.
 
+[1.2.1]: https://github.com/alexc-hue/recovery-scenario-planner/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/alexc-hue/recovery-scenario-planner/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/alexc-hue/recovery-scenario-planner/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/alexc-hue/recovery-scenario-planner/releases/tag/v1.0.0
