@@ -4,14 +4,14 @@
     "engines/dashboard/metrics.py": {
       "source_repo": "alexc-hue/project-controls-dashboard",
       "source_path": "src/metrics.py",
-      "source_commit": "3e12a36b4385577daa461b115e6d71fd6bd6fb06",
-      "fingerprint": "52db47396150a3c5a603f79099c5ac1efb7f9dbebc2331dac10d7b52b7991144"
+      "source_commit": "bc70a76298dbc89e468902381dd55c097fc9df98",
+      "fingerprint": "73c462711d4123845803fea8d4419f095ed99aaa54cc65faf77c901fab5678de"
     },
     "engines/formatting.py": {
       "source_repo": "alexc-hue/project-controls-dashboard",
       "source_path": "src/formatting.py",
-      "source_commit": "d724d531d9cfe382dfb8edd453a3a50f627a8075",
-      "fingerprint": "1fcaaa14cb4070931c487e1cdc219b4a8c41277a605201a1fde57f15a4b58db3"
+      "source_commit": "bc70a76298dbc89e468902381dd55c097fc9df98",
+      "fingerprint": "c18bf4d4908bc1ecdcb1ebe0880d8c2026c5044de26f8a022633d5f2b3b44b23"
     },
     "engines/risk/metrics.py": {
       "source_repo": "alexc-hue/risk-trend-tracker",
@@ -22,8 +22,8 @@
     "engines/schedule/cpm.py": {
       "source_repo": "alexc-hue/schedule-health-analyzer",
       "source_path": "src/cpm.py",
-      "source_commit": "663c6871b63c593441b16a908b7fe2c2103209db",
-      "fingerprint": "8f97215dfd793c14a9a94309268a3576a67b2755cb61e7777df8701c24fc29f0"
+      "source_commit": "696fad547693fc91587a8427798e1fc35df76061",
+      "fingerprint": "75032d557546465e91df4c76c78b0f84ce18bf4f9872fb5de4517dc9ea6b7258"
     },
     "engines/schedule/metrics.py": {
       "source_repo": "alexc-hue/schedule-health-analyzer",

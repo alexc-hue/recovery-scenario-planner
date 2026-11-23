@@ -117,12 +117,17 @@ def add_resources(
     for i, row in crashed.iterrows():
         if row["activity_id"] in critical_ids and row["percent_complete"] < 100:
             remaining = row["current_duration_days"] * (1 - row["percent_complete"] / 100)
+            if remaining <= 0:
+                # Nothing left to crash (e.g. a 0-day milestone). The 1-day
+                # floor below would otherwise make it longer, not shorter.
+                continue
             cut = remaining * CRASH_PCT
-            new_duration = max(1, round(row["current_duration_days"] - cut))
-            # Clamp to zero: for a very short activity, the 1-day crash floor
-            # above can land AT OR ABOVE its current duration (nothing left to
-            # cut), which would otherwise make applied_cut negative and
-            # silently corrupt the aggregated total_days_cut/reported benefit.
+            # Crashing never lengthens an activity: the 1-day floor applies
+            # only to activities already longer than a day.
+            new_duration = min(row["current_duration_days"], max(1, round(row["current_duration_days"] - cut)))
+            # Clamp to zero: a guard on the reported benefit, so a duration
+            # that didn't shrink can never count as a negative cut in the
+            # aggregated total_days_cut.
             applied_cut = max(0, row["current_duration_days"] - new_duration)
             crashed.at[i, "current_duration_days"] = new_duration
             total_days_cut += applied_cut
@@ -170,7 +175,12 @@ def fast_track(
         # Read from the original, unmutated map so a chained pair (upstream of
         # one = downstream of another) can't pick up an already-overwritten
         # predecessor list from an earlier iteration of this loop.
-        pred_map[downstream] = list(original_pred_map[upstream])
+        # Swap only the upstream->downstream link: the downstream now waits on
+        # the upstream's own predecessors, plus any other predecessors it
+        # already had (dropping those would overstate the recovery).
+        upstream_preds = list(original_pred_map[upstream])
+        others = [p for p in original_pred_map[downstream] if p != upstream and p not in upstream_preds]
+        pred_map[downstream] = upstream_preds + others
     resequenced["predecessors"] = resequenced["activity_id"].map(pred_map)
 
     current = _current_cpm(resequenced, project_start)

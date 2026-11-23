@@ -4,6 +4,33 @@ All notable changes to this project are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and version numbers
 follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.2] - 2026-11-23
+
+Bug-fix release. The console output and the comparison chart are unchanged on the sample data.
+
+### Fixed
+
+- Fast-track replaced the downstream activity's whole predecessor list with the upstream
+  activity's. Any other predecessor of the downstream activity was dropped, so the model could show
+  an earlier finish than the logic allows. Now only the upstream-to-downstream link is swapped. This
+  never mattered on the sample data, where CM2's only predecessor is CM1, but `FAST_TRACK_PAIRS` is
+  meant to be edited.
+- Crashing an open 0-day critical milestone made it 1 day long, because of the 1-day crash floor.
+  Activities with nothing left to crash are now skipped, and crashing never makes an activity
+  longer than it was (a 4.6-day activity near its floor used to become 5 days; it now stays at 4.6).
+
+### Changed
+
+- Re-vendored the engines from schedule-health-analyzer 1.2.2 (`engines/schedule/cpm.py`: blank or
+  negative durations and unknown predecessor ids raise clear errors) and project-controls-dashboard
+  1.2.2 (`engines/dashboard/metrics.py`: EVM zero guards and status matching;
+  `engines/formatting.py`: no `-$0`). `engines/VENDORED.json` records the new source commits.
+
+### Added
+
+- Tests for both fixes. The existing crash-floor test now expects the 4.6-day activity to stay at
+  4.6 days.
+
 ## [1.2.1] - 2026-11-12
 
 Maintenance release. The tool's output is unchanged.
@@ -59,6 +86,7 @@ Checks and tests only. The tool's output is unchanged.
 
 First tagged release, marking the state of the repo before this changelog started. Models three recovery options (add resources, fast-track, accept the delay) with the vendored CPM engine and ranks them against schedule, cost and risk with a stated decision-rule table. Includes the fixes from code review, a pytest suite and CI.
 
+[1.2.2]: https://github.com/alexc-hue/recovery-scenario-planner/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/alexc-hue/recovery-scenario-planner/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/alexc-hue/recovery-scenario-planner/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/alexc-hue/recovery-scenario-planner/compare/v1.0.0...v1.1.0

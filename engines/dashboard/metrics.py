@@ -10,6 +10,25 @@ from __future__ import annotations
 
 import pandas as pd
 
+# Risk and change statuses this tool compares against. Matching ignores case
+# and surrounding whitespace; any other status is kept as written.
+STATUSES = ("Open", "Mitigating", "Closed", "Approved", "Pending", "Rejected")
+_CANONICAL_STATUS = {status.casefold(): status for status in STATUSES}
+
+
+def _tidy_status(value):
+    if not isinstance(value, str):
+        return value
+    text = value.strip()
+    return _CANONICAL_STATUS.get(text.casefold(), text)
+
+
+def normalise_status(status: pd.Series) -> pd.Series:
+    """Status labels with surrounding whitespace removed, and "closed",
+    " Approved" and the like written as the canonical label, so a hand-typed
+    variant is counted like the rest. Missing values stay missing."""
+    return status.map(_tidy_status)
+
 
 def load_timeseries(path: str) -> pd.DataFrame:
     df = pd.read_csv(path)
@@ -45,10 +64,14 @@ def project_summary(df: pd.DataFrame, bac: float) -> dict:
     pv, ev, ac = latest["planned_value_cum"], latest["earned_value_cum"], latest["actual_cost_cum"]
     spi, cpi = latest["spi"], latest["cpi"]
 
-    eac = bac / cpi
+    # Same NaN-not-inf rule as above. A CPI of 0 (EV 0, AC above 0) has no
+    # meaningful EAC, and once AC reaches BAC there is no budget left for
+    # TCPI to measure against: the formula would go negative and read as an
+    # easy target rather than an unachievable one.
+    eac = bac / cpi if pd.notna(cpi) and cpi else float("nan")
     etc = eac - ac
     vac = bac - eac
-    tcpi = (bac - ev) / (bac - ac) if (bac - ac) else float("nan")
+    tcpi = (bac - ev) / (bac - ac) if bac - ac > 0 else float("nan")
 
     return {
         "status_period": latest["period_label"].strftime("%Y-%m"),
@@ -64,7 +87,7 @@ def project_summary(df: pd.DataFrame, bac: float) -> dict:
         "cv_pct": (ev - ac) / ev * 100 if ev else float("nan"),
         "spi": spi,
         "cpi": cpi,
-        "percent_complete": ev / bac * 100,
+        "percent_complete": ev / bac * 100 if bac else float("nan"),
         "eac": eac,
         "etc": etc,
         "vac": vac,
@@ -91,6 +114,7 @@ def load_milestones(path: str) -> pd.DataFrame:
 
 def load_risk_register(path: str, status_date: str) -> pd.DataFrame:
     df = pd.read_csv(path, parse_dates=["mitigation_due_date"])
+    df["status"] = normalise_status(df["status"])
     df["exposure"] = df["probability"] * df["impact"]
     status_dt = pd.Timestamp(status_date)
     df["overdue"] = (df["status"] != "Closed") & (df["mitigation_due_date"] < status_dt)
@@ -99,6 +123,7 @@ def load_risk_register(path: str, status_date: str) -> pd.DataFrame:
 
 def load_change_register(path: str) -> pd.DataFrame:
     df = pd.read_csv(path, parse_dates=["date_raised"])
+    df["status"] = normalise_status(df["status"])
     return df.sort_values("cost_impact", ascending=False).reset_index(drop=True)
 
 
@@ -110,8 +135,9 @@ def change_impact_summary(changes: pd.DataFrame, bac: float) -> dict:
     scope-change variance (how much the baseline itself has moved), which is
     the distinction a change register is actually for.
     """
-    approved = changes[changes["status"] == "Approved"]
-    pending = changes[changes["status"] == "Pending"]
+    status = normalise_status(changes["status"])
+    approved = changes[status == "Approved"]
+    pending = changes[status == "Pending"]
     approved_cost = approved["cost_impact"].sum()
     return {
         "approved_cost_impact": approved_cost,
@@ -124,7 +150,9 @@ def change_impact_summary(changes: pd.DataFrame, bac: float) -> dict:
 
 
 def forecast_completion_date(spi: float | None, project_start: str, planned_finish: str) -> pd.Timestamp | None:
-    """Simple SPI-based forecast: stretch remaining planned duration by 1/SPI.
+    """Simple SPI-based forecast: stretch the whole planned duration, from
+    project_start to planned_finish, by 1/SPI (planned duration / SPI), and
+    count it from project_start.
 
     Returns None (not yet forecastable) if SPI is missing, NaN, zero, or
     negative -- a zero or negative SPI has no meaningful "stretch factor"

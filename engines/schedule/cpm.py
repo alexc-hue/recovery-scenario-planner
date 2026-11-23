@@ -28,6 +28,14 @@ def _topological_order(activities: pd.DataFrame) -> list[str]:
     cost grows with activities + links rather than activities x rounds.
     """
     predecessors = {row.activity_id: set(row.predecessors) for row in activities.itertuples()}
+    unknown = sorted((aid, p) for aid, preds in predecessors.items() for p in preds if p not in predecessors)
+    if unknown:
+        # Checked before ordering: a typo in a predecessor list would
+        # otherwise surface as a cycle, which sends people looking for the
+        # wrong problem.
+        aid, p = unknown[0]
+        more = f" (and {len(unknown) - 1} more)" if len(unknown) > 1 else ""
+        raise ValueError(f"Unknown predecessor id {p!r} on activity {aid!r}{more}: it is not in the activity list.")
     waiting_on = {aid: len(preds) for aid, preds in predecessors.items()}
     successors: dict[str, list[str]] = {}
     for aid, preds in predecessors.items():
@@ -46,9 +54,11 @@ def _topological_order(activities: pd.DataFrame) -> list[str]:
                     released.append(succ)
         ready = sorted(released)
     if len(resolved) < len(predecessors):
-        # Anything left is on a cycle, or waits on a predecessor ID that isn't
-        # in the activity list, so it can never be released.
-        raise ValueError("Cycle detected in activity network (or an unknown predecessor id).")
+        # Unknown predecessor IDs were ruled out above, so anything left is on
+        # a cycle (or waits on one) and can never be released.
+        stuck = sorted(set(predecessors) - set(resolved))
+        shown = ", ".join(str(aid) for aid in stuck[:5]) +(", ..." if len(stuck) > 5 else "")
+        raise ValueError(f"Cycle detected in activity network (activities on or behind it: {shown}).")
     return resolved
 
 
@@ -59,6 +69,14 @@ def run_cpm(activities: pd.DataFrame, duration_col: str, start_date: pd.Timestam
     order = _topological_order(activities)
     duration = dict(zip(activities["activity_id"], activities[duration_col]))
     preds = dict(zip(activities["activity_id"], activities["predecessors"]))
+    for aid in order:
+        # A blank duration can't be scheduled, and a negative one would put
+        # the finish before the start without any warning.
+        if pd.isna(duration[aid]) or duration[aid] < 0:
+            raise ValueError(
+                f"Activity {aid!r} has an invalid {duration_col}: {duration[aid]}. "
+                f"Durations must be a number of days, 0 or more."
+            )
 
     early_start: dict[str, pd.Timestamp] = {}
     early_finish: dict[str, pd.Timestamp] = {}

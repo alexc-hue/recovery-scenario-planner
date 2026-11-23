@@ -72,8 +72,9 @@ def test_add_resources_clamps_negative_applied_cut():
 
     # round(4.6 - 0.069) = round(4.531) = 5, which is ABOVE current_duration_days
     # (4.6) -- without the clamp this activity would contribute a negative
-    # "days cut" to the total.
-    assert result.activities.loc[0, "current_duration_days"] == 5
+    # "days cut" to the total. Since 1.2.2 the crash also never lengthens the
+    # activity, so it stays at 4.6 (it used to become 5).
+    assert result.activities.loc[0, "current_duration_days"] == pytest.approx(4.6)
     assert result.cost_impact == pytest.approx(0.0)
 
 
@@ -119,3 +120,71 @@ def test_fast_track_resequences_pair_and_uplifts_sensitive_risk_exposure():
 
     # Only R03/R06 (the stated sensitive risks) get the uplift; R99 does not.
     assert result.risk_exposure == pytest.approx(50.0 + (10 + 6) * 0.25)
+
+
+# --- 1.2.2 -------------------------------------------------------------------
+
+def test_add_resources_leaves_zero_day_milestone_at_zero():
+    """The 1-day crash floor used to turn an open 0-day critical milestone into
+    a 1-day activity, pushing the finish out instead of pulling it in."""
+    activities = pd.DataFrame({
+        "activity_id": ["A1", "MS"],
+        "predecessors": [[], ["A1"]],
+        "activity_name": ["Work", "Milestone"],
+        "phase": ["Test", "Test"],
+        "status": ["Complete", "Not Started"],
+        "percent_complete": [100, 0],
+        "current_duration_days": [10, 0],
+        "baseline_duration_days": [10, 0],
+    })
+    start = pd.Timestamp("2026-01-01")
+    baseline_result = cpm_engine.run_cpm(activities, duration_col="baseline_duration_days", start_date=start)
+    current_before_comparison = pd.DataFrame({"activity_id": ["A1", "MS"], "is_critical": [True, True]})
+
+    result = add_resources(
+        activities=activities,
+        baseline_result=baseline_result,
+        project_start="2026-01-01",
+        current_before_finish=baseline_result.project_finish,
+        portfolio_exposure=0.0,
+        current_before_comparison=current_before_comparison,
+    )
+
+    assert result.activities.set_index("activity_id").loc["MS", "current_duration_days"] == 0
+    assert result.forecast_finish == baseline_result.project_finish
+    assert result.days_recovered == 0
+    assert result.cost_impact == pytest.approx(0.0)
+
+
+def test_fast_track_keeps_the_downstream_activitys_other_predecessors():
+    """Fast-tracking swaps only the upstream->downstream link. CM2's other
+    predecessor (X, the long one) used to be dropped, which overstated recovery."""
+    activities = pd.DataFrame({
+        "activity_id": ["M2", "X", "CM1", "CM2"],
+        "predecessors": [[], [], ["M2"], ["CM1", "X"]],
+        "activity_name": ["Gate", "Other gate", "Pre-commissioning Checks", "Functional Testing"],
+        "phase": ["Test"] * 4,
+        "status": ["Complete", "In Progress", "In Progress", "Not Started"],
+        "percent_complete": [100, 50, 50, 0],
+        "current_duration_days": [5, 10, 3, 4],
+    })
+    start = pd.Timestamp("2026-01-01")
+    baseline_result = cpm_engine.run_cpm(activities, duration_col="current_duration_days", start_date=start)
+    # CM2 waits on X (0-10), not CM1 (5-8): CM2 10-14.
+    assert baseline_result.project_finish == pd.Timestamp("2026-01-15")
+
+    risk_snapshots = pd.DataFrame({"risk_id": ["R03"], "snapshot_date": [start], "exposure": [0]})
+    result = fast_track(
+        activities=activities,
+        baseline_result=baseline_result,
+        project_start="2026-01-01",
+        current_before_finish=baseline_result.project_finish,
+        risk_snapshots=risk_snapshots,
+        portfolio_exposure=0.0,
+    )
+
+    resequenced = result.activities.set_index("activity_id")
+    assert resequenced.loc["CM2", "predecessors"] == ["M2", "X"]
+    # X still gates CM2, so fast-tracking CM1->CM2 recovers nothing here.
+    assert result.forecast_finish == pd.Timestamp("2026-01-15")
+    assert result.days_recovered == 0
