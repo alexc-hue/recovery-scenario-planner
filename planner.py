@@ -1,7 +1,7 @@
 """
 Recovery Scenario Planner
 ------------------------------------
-Runs the vendored CPM and EVM engines (see engines/) against the Ridgeline
+Runs the vendored CPM and EVM engines (see engines/) against the Thornmere
 programme's current status, applies each of the three canned interventions
 in src/interventions.py, and prints a before/after comparison plus the
 ranked recommendation with rationale from src/recommend.py.
@@ -101,7 +101,7 @@ def build_scenarios(activities, snapshots, portfolio_exposure):
 def print_comparison(baseline_result, scenarios, summary) -> None:
     print("=" * 68)
     print("RECOVERY SCENARIO COMPARISON")
-    print("Ridgeline LNG Compressor Station Retrofit, as of", STATUS_DATE)
+    print("Thornmere LNG Compressor Station Retrofit, as of", STATUS_DATE)
     print("=" * 68)
     print()
     print(f"Baseline finish:  {baseline_result.project_finish.date()}")
@@ -156,7 +156,7 @@ def chart_comparison(scenarios) -> str | None:
         ax.grid(color=chart_style.GRID, linewidth=0.6, axis="x")
 
         chart_style.apply_chrome(fig, axes)
-        fig.suptitle("Recovery Scenario Comparison: Ridgeline LNG Compressor Station Retrofit",
+        fig.suptitle("Recovery Scenario Comparison: Thornmere LNG Compressor Station Retrofit",
                      fontsize=12, color=chart_style.INK)
         fig.tight_layout()
         out_path = os.path.join(ASSETS_DIR, "before_after_comparison.png")

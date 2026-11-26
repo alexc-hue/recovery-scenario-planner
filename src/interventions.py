@@ -1,4 +1,4 @@
-"""Canned, parametric recovery interventions for the Ridgeline programme.
+"""Canned, parametric recovery interventions for the Thornmere programme.
 
 Three named, stated adjustments to the vendored CPM engine's inputs, each
 re-run through the exact same unmodified engine (see engines/schedule/cpm.py).

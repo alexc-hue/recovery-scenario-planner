@@ -36,7 +36,7 @@ numbers on.
 ## Approach
 
 - Run the vendored CPM and EVM engines (unchanged, see Implementation)
-  against the Ridgeline programme's current status to get a starting
+  against the Thornmere programme's current status to get a starting
   point: SPI/CPI, the current critical-path delay, and portfolio risk
   exposure.
 - Apply three canned, named, parametric interventions to that starting
@@ -78,7 +78,7 @@ uses. No new CPM, EVM, or risk-scoring logic exists anywhere in this repo.
 The only new code is `src/interventions.py` (the three canned scenarios),
 `src/recommend.py` (the decision-rule table), `planner.py`
 (orchestration), and a small chart-style/formatting layer shared with the
-other five repos. The sample data is the same fictional Ridgeline LNG
+other five repos. The sample data is the same fictional Thornmere LNG
 Compressor Station Retrofit programme project-controls-reporting-engine
 already uses, reused unchanged so both repos describe the same story from
 different angles.
@@ -92,7 +92,7 @@ from. The tests check that no copy has been edited here, and a separate CI job
 ```
 ====================================================================
 RECOVERY SCENARIO COMPARISON
-Ridgeline LNG Compressor Station Retrofit, as of 2026-08-01
+Thornmere LNG Compressor Station Retrofit, as of 2026-08-01
 ====================================================================
 
 Baseline finish:  2026-08-03

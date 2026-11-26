@@ -4,6 +4,17 @@ All notable changes to this project are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and version numbers
 follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.3] - 2026-11-27
+
+Maintenance release. No number changed; only the name of the fictional sample programme.
+
+### Changed
+
+- The fictional sample programme is now the Thornmere LNG Compressor Station Retrofit, the same
+  rename as project-controls-reporting-engine 1.2.3. The old sample name matched the name of a real
+  gas pipeline project. The console headline, the chart title, the README and
+  `assets/before_after_comparison.png` use the new name; the sample data is unchanged.
+
 ## [1.2.2] - 2026-11-23
 
 Bug-fix release. The console output and the comparison chart are unchanged on the sample data.
@@ -86,6 +97,7 @@ Checks and tests only. The tool's output is unchanged.
 
 First tagged release, marking the state of the repo before this changelog started. Models three recovery options (add resources, fast-track, accept the delay) with the vendored CPM engine and ranks them against schedule, cost and risk with a stated decision-rule table. Includes the fixes from code review, a pytest suite and CI.
 
+[1.2.3]: https://github.com/alexc-hue/recovery-scenario-planner/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/alexc-hue/recovery-scenario-planner/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/alexc-hue/recovery-scenario-planner/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/alexc-hue/recovery-scenario-planner/compare/v1.1.0...v1.2.0
